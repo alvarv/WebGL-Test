@@ -105,11 +105,11 @@
     }
 
     Renderer.prototype.handleMouseDown = function(event) {
-        mouseDown = true;
+        this.mouseDown = true;
     }
 
     Renderer.prototype.handleMouseUp = function(event) {
-        mouseDown = false;
+        this.mouseDown = false;
     }
 
     Renderer.prototype.handleMouseMove = function(event) {
@@ -146,8 +146,10 @@
     Renderer.prototype.handleMouse = function(deltaTime) {
 	var deltaX = this.nouMouseX -this.mouseX;
 	var deltaY = this.nouMouseY -this.mouseY;
-	this.camera.rotateX(deltaY); //l'eix X controla la rotació vertical (mirar a dalt o abaix)
-	this.camera.rotateY(deltaX); //l'eix Y controla la rotació horitzontal (mirar a esquerra o dreta)
+	if(this.mouseDown == true) {
+	    this.camera.rotateX(deltaY); //l'eix X controla la rotació vertical (mirar a dalt o abaix)
+	    this.camera.rotateY(deltaX); //l'eix Y controla la rotació horitzontal (mirar a esquerra o dreta)
+	}
 	this.mouseX = this.nouMouseX;
 	this.mouseY = this.nouMouseY;
     }
@@ -270,6 +272,8 @@
 	//resetejar la ModelView
         mat4.identity(this.mvMatrix);
 	//aplicar les transformacions de la càmera
+	//fem un translate fixe per que la camera roti al voltant de l'escena.
+	//Si volguéssim que la càmera "es mogués" per l'escena, faríem translate a la mvMatrix amb el vector this.camera.pos
 	mat4.translate(this.mvMatrix, this.mvMatrix,[0,0,-10]);
         mat4.rotate(this.mvMatrix, this.mvMatrix, degToRad(this.camera.rot[0]), [1, 0, 0]);
         mat4.rotate(this.mvMatrix, this.mvMatrix, degToRad(this.camera.rot[1]), [0, 1, 0]);
