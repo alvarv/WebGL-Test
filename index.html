@@ -75,7 +75,7 @@
 
 	//vista stàndard de perspectiva (3D) aplicada a la Projection Matrix
     	this.pMatrix = mat4.create();
-	mat4.perspective(this.pMatrix,45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 100.0);
+	mat4.perspective(this.pMatrix,45, this.gl.viewportWidth / this.gl.viewportHeight, 3, 17);
 
 	this.tempsPrevi = 0.0; // utilitzat per calcular el deltaTime de cada frame
 
@@ -270,20 +270,20 @@
 	//resetejar la ModelView
         mat4.identity(this.mvMatrix);
 	//aplicar les transformacions de la càmera
+	mat4.translate(this.mvMatrix, this.mvMatrix,[0,0,-10]);
         mat4.rotate(this.mvMatrix, this.mvMatrix, degToRad(this.camera.rot[0]), [1, 0, 0]);
         mat4.rotate(this.mvMatrix, this.mvMatrix, degToRad(this.camera.rot[1]), [0, 1, 0]);
-	mat4.translate(this.mvMatrix, this.mvMatrix,this.camera.pos)
 	
 	//dibuixar la caixa
         this.mvPushMatrix();
-        	mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, -5]);
+        	mat4.translate(this.mvMatrix, this.mvMatrix, [-5, 0.0, 0.0]);
         	this.setMatrixUniforms();
 		this.cube.draw(this.gl,this.shaderProgram);
         this.mvPopMatrix();
 
 	//dibuixar la esfera
         this.mvPushMatrix();
-        	mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, 5]);
+        	mat4.translate(this.mvMatrix, this.mvMatrix, [5, 0.0, 0.0]);
         	this.setMatrixUniforms();
 		this.moon.draw(this.gl,this.shaderProgram);
         this.mvPopMatrix();
