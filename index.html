@@ -1,0 +1,314 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Index</title>
+
+<!-- operacions amb matrius -->
+<script type="text/javascript" src="./index/gl-matrix-min.js"></script>
+
+<!-- utilitats per compatibilitat entre navegadors -->
+<script type="text/javascript" src="./index/webgl-utils.js"></script>
+
+<!-- Models -->
+<script type="text/javascript" src="./index/Cube.js"></script>
+<script type="text/javascript" src="./index/Ball.js"></script>
+
+<!-- Camera -->
+<script type="text/javascript" src="./index/Camera.js"></script>
+
+<!-- Utilitat per carregar textures i degToRad -->
+<script type="text/javascript" src="./index/utils.js"></script>
+
+<!-- vertex shader -->
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPos;
+    attribute vec3 aVertexNormal;
+    attribute vec2 aCoordTextura;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    vec3 colorAmbient = vec3(0.2,0.2,0.2);
+    vec3 colorLlum = vec3(0.8,0.8,0.8);
+    vec3 posLlum = vec3(10.0,10.0,10.0);
+
+    varying vec2 vCoordTextura;
+    varying vec3 vfactorLlum;
+
+    void main(void) {
+        vec4 mvPosition = uMVMatrix * vec4(aVertexPos, 1.0);
+        gl_Position = uPMatrix * mvPosition;
+        vCoordTextura = aCoordTextura;
+
+        vec3 lightDirection = normalize(vec4(uMVMatrix * vec4(posLlum,1.0)).xyz - mvPosition.xyz);
+
+        vec3 normalTransformada = uNMatrix * aVertexNormal;
+        float factorLlumDireccional = max(dot(normalTransformada, lightDirection), 0.0);
+        vfactorLlum = colorAmbient + colorLlum * factorLlumDireccional;
+    }
+</script>
+
+<!-- fragment shader -->
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec2 vCoordTextura;
+    varying vec3 vfactorLlum;
+
+    uniform sampler2D uSampler;
+
+    void main(void) {
+        vec4 colorTextura = texture2D(uSampler, vec2(vCoordTextura.s, vCoordTextura.t));
+        gl_FragColor = vec4(colorTextura.rgb * vfactorLlum, colorTextura.a);
+    }
+</script>
+
+<script type="text/javascript">
+    function Renderer(canvas) {
+	this.gl = this.initGL(canvas); //el contexte utilitzat.
+	this.shaderProgram = this.initShaders("shader-vs","shader-fs");
+	
+	//ModelView Matrix, un stack per fer push i pop
+    	this.mvMatrix = mat4.create();
+    	this.mvMatrixStack = [];
+
+	//vista stàndard de perspectiva (3D) aplicada a la Projection Matrix
+    	this.pMatrix = mat4.create();
+	mat4.perspective(this.pMatrix,45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 100.0);
+
+	this.tempsPrevi = 0.0; // utilitzat per calcular el deltaTime de cada frame
+
+	//objectes
+	this.cube = new Cube(this.gl, "./index/crate.gif");
+	this.moon = new Ball(this.gl, "./index/moon.gif");
+
+	//camera amb rotacions eulerianes (angles X i Y només)
+	this.camera = new Camera();
+
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+	
+	//input
+	this.teclesPresionades = {}
+	this.mouseDown = false;
+	this.mouseX = 0;
+	this.mouseY = 0;
+	this.nouMouseX = 0;
+	this.nouMouseY = 0;	
+	var renderer = this;
+    	document.onkeydown = function(event) { renderer.handleKeyDown(event); };
+    	document.onkeyup = function(event) { renderer.handleKeyUp(event); };
+        canvas.onmousedown = function(event) { renderer.handleMouseDown(event); };
+        document.onmouseup = function(event) { renderer.handleMouseUp(event); };
+        document.onmousemove = function(event) { renderer.handleMouseMove(event); };
+    }
+
+    Renderer.prototype.handleMouseDown = function(event) {
+        mouseDown = true;
+    }
+
+    Renderer.prototype.handleMouseUp = function(event) {
+        mouseDown = false;
+    }
+
+    Renderer.prototype.handleMouseMove = function(event) {
+        this.nouMouseX = event.clientX;
+        this.nouMouseY = event.clientY;
+    }
+
+    Renderer.prototype.handleKeyDown = function(event) {
+        this.teclesPresionades[event.keyCode] = true;
+    }
+
+    Renderer.prototype.handleKeyUp = function(event) {
+        this.teclesPresionades[event.keyCode] = false;
+    }
+
+    Renderer.prototype.handleKeys = function(deltaTime) {
+	var dir = vec3.fromValues(Math.sin(degToRad(this.camera.rot[1])), -Math.sin(degToRad(this.camera.rot[0])), -Math.cos(degToRad(this.camera.rot[1])));
+	var vel = 10;
+	//moviment en funció de la direcció en la que mira la càmera. WASD.
+	if(this.teclesPresionades[65] == true) { //a
+		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(-dir[2]*vel*deltaTime,0,dir[0]*vel*deltaTime));
+	}
+	if(this.teclesPresionades[68] == true) { //d
+		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(dir[2]*vel*deltaTime,0,-dir[0]*vel*deltaTime));
+	}
+	if(this.teclesPresionades[87] == true) { //w
+		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(-dir[0]*vel*deltaTime,-dir[1]*vel*deltaTime,-dir[2]*vel*deltaTime));
+	}
+	if(this.teclesPresionades[83] == true) { //s
+		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(dir[0]*vel*deltaTime,dir[1]*vel*deltaTime,dir[2]*vel*deltaTime));
+	}
+    }
+
+    Renderer.prototype.handleMouse = function(deltaTime) {
+	var deltaX = this.nouMouseX -this.mouseX;
+	var deltaY = this.nouMouseY -this.mouseY;
+	this.camera.rotateX(deltaY); //l'eix X controla la rotació vertical (mirar a dalt o abaix)
+	this.camera.rotateY(deltaX); //l'eix Y controla la rotació horitzontal (mirar a esquerra o dreta)
+	this.mouseX = this.nouMouseX;
+	this.mouseY = this.nouMouseY;
+    }
+
+    Renderer.prototype.initGL = function(canvas) { //retorna un contexte en el canvas donat, amb el format del canvas
+        try {
+            var gl = canvas.getContext("experimental-webgl");
+            gl.viewportWidth = canvas.width;
+            gl.viewportHeight = canvas.height;
+        } catch (e) {
+        }
+        if (!gl) {
+            alert("Could not initialise WebGL, sorry :-(");
+        }
+	return gl;
+    }
+
+    Renderer.prototype.getShader = function(id) { //retorna un shader a partir d'una id
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
+            return null;
+        }
+
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3) { //node de tipus text
+                str += k.textContent;
+            }
+            k = k.nextSibling;
+        }
+
+        var shader;
+        if (shaderScript.type == "x-shader/x-fragment") {
+            shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+        } else if (shaderScript.type == "x-shader/x-vertex") {
+            shader = this.gl.createShader(this.gl.VERTEX_SHADER);
+        } else {
+            return null;
+        }
+
+        this.gl.shaderSource(shader, str);
+        this.gl.compileShader(shader);
+        if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) { //error de compilació
+            alert(this.gl.getShaderInfoLog(shader));
+            return null;
+        }
+
+        return shader;
+    }
+
+    Renderer.prototype.initShaders = function(stringV,stringF) { //retorna un programa a partir de dos shaders
+        var vertexShader = this.getShader(stringV);
+        var fragmentShader = this.getShader(stringF);
+
+        var program = this.gl.createProgram();
+        this.gl.attachShader(program, vertexShader);
+        this.gl.attachShader(program, fragmentShader);
+        this.gl.linkProgram(program);
+
+        if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+            alert("No s'han pogut inicialitzar els shaders");
+        }
+
+        this.gl.useProgram(program);
+
+	//Declarem aquí els atributs i les uniforms del programa que hem compilat
+        program.vertexPositionAttribute = this.gl.getAttribLocation(program, "aVertexPos");
+        this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
+
+        program.vertexNormalAttribute = this.gl.getAttribLocation(program, "aVertexNormal");
+        this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
+
+        program.textureCoordAttribute = this.gl.getAttribLocation(program, "aCoordTextura");
+        this.gl.enableVertexAttribArray(program.textureCoordAttribute);
+
+        program.pMatrixUniform = this.gl.getUniformLocation(program, "uPMatrix");
+        program.mvMatrixUniform = this.gl.getUniformLocation(program, "uMVMatrix");
+        program.nMatrixUniform = this.gl.getUniformLocation(program, "uNMatrix");
+        program.samplerUniform = this.gl.getUniformLocation(program, "uSampler");
+
+	return program;
+    }
+
+    Renderer.prototype.mvPushMatrix = function() { //desa la ModelView
+        var c = mat4.create();
+        mat4.copy(c,this.mvMatrix);
+        this.mvMatrixStack.push(c);
+    }
+
+    Renderer.prototype.mvPopMatrix = function() { //recupera la darrera ModelView desada
+        if (this.mvMatrixStack.length == 0) {
+            throw "PopMatrix no ha trobat cap matriu desada!"; 
+        }
+        this.mvMatrix = this.mvMatrixStack.pop();
+    }
+
+    Renderer.prototype.setMatrixUniforms = function() { //enviem totes les uniforms del programa actual
+        this.gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform, false, this.pMatrix);
+        this.gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform, false, this.mvMatrix);
+        var normalMatrix = mat3.create();
+        mat3.normalFromMat4(normalMatrix, this.mvMatrix);
+        this.gl.uniformMatrix3fv(this.shaderProgram.nMatrixUniform, false, normalMatrix);
+    }
+
+    Renderer.prototype.update = function() {
+        var timeNow = new Date().getTime()/1000.0;
+        var deltaTime = timeNow - this.tempsPrevi;
+        this.tempsPrevi = timeNow;
+
+	renderer.handleKeys(deltaTime); //moviment
+	renderer.handleMouse(deltaTime); //càmera
+    }
+
+    Renderer.prototype.draw = function() {
+	//netejar la pantalla
+        this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+	
+	//resetejar la ModelView
+        mat4.identity(this.mvMatrix);
+	//aplicar les transformacions de la càmera
+        mat4.rotate(this.mvMatrix, this.mvMatrix, degToRad(this.camera.rot[0]), [1, 0, 0]);
+        mat4.rotate(this.mvMatrix, this.mvMatrix, degToRad(this.camera.rot[1]), [0, 1, 0]);
+	mat4.translate(this.mvMatrix, this.mvMatrix,this.camera.pos)
+	
+	//dibuixar la caixa
+        this.mvPushMatrix();
+        	mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, -5]);
+        	this.setMatrixUniforms();
+		this.cube.draw(this.gl,this.shaderProgram);
+        this.mvPopMatrix();
+
+	//dibuixar la esfera
+        this.mvPushMatrix();
+        	mat4.translate(this.mvMatrix, this.mvMatrix, [0.0, 0.0, 5]);
+        	this.setMatrixUniforms();
+		this.moon.draw(this.gl,this.shaderProgram);
+        this.mvPopMatrix();
+    }
+
+    var renderer;
+
+    function loop() { //main loop de l'escena, es truca cada vegada que es vol refrescar la pantalla
+        requestAnimFrame(loop);
+        renderer.update();
+        renderer.draw();
+    }
+
+    function webGLStart() {
+    	var canvas = document.getElementById("canvas");
+	canvas.width = document.body.clientWidth; 
+ 	canvas.height = document.body.clientHeight;
+	renderer = new Renderer(canvas);
+        loop();
+    }
+
+</script>
+</head>
+
+<body onload="webGLStart();">
+    <canvas id="canvas" style="border: none;"></canvas>
+</body>
+</html>
