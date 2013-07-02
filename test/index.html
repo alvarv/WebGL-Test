@@ -81,7 +81,7 @@
 
 	//objectes
 	this.cube = new Cube(this.gl, "./index/crate.gif");
-	this.moon = new Ball(this.gl, "./index/moon.gif");
+	this.ball = new Ball(this.gl, "./index/moon.gif");
 
 	//camera amb rotacions eulerianes (angles X i Y només)
 	this.camera = new Camera();
@@ -126,21 +126,10 @@
     }
 
     Renderer.prototype.handleKeys = function(deltaTime) {
-	var dir = vec3.fromValues(Math.sin(degToRad(this.camera.rot[1])), -Math.sin(degToRad(this.camera.rot[0])), -Math.cos(degToRad(this.camera.rot[1])));
-	var vel = 10;
-	//moviment en funció de la direcció en la que mira la càmera. WASD.
-	if(this.teclesPresionades[65] == true) { //a
-		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(-dir[2]*vel*deltaTime,0,dir[0]*vel*deltaTime));
-	}
-	if(this.teclesPresionades[68] == true) { //d
-		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(dir[2]*vel*deltaTime,0,-dir[0]*vel*deltaTime));
-	}
-	if(this.teclesPresionades[87] == true) { //w
-		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(-dir[0]*vel*deltaTime,-dir[1]*vel*deltaTime,-dir[2]*vel*deltaTime));
-	}
-	if(this.teclesPresionades[83] == true) { //s
-		vec3.add(this.camera.pos,this.camera.pos,vec3.fromValues(dir[0]*vel*deltaTime,dir[1]*vel*deltaTime,dir[2]*vel*deltaTime));
-	}
+	//Per fer servir aquesta funció, utilitzem:
+	//if(this.teclesPresionades[codi_ASCII_de_la_tecla] == true) { 
+	//	...
+	//}
     }
 
     Renderer.prototype.handleMouse = function(deltaTime) {
@@ -281,7 +270,7 @@
 	//dibuixar la caixa
         this.mvPushMatrix();
         	mat4.translate(this.mvMatrix, this.mvMatrix, [-5, 0.0, 0.0]);
-        	this.setMatrixUniforms();
+        	this.setMatrixUniforms(); //envia les matrius (ModelView i Projection al shader
 		this.cube.draw(this.gl,this.shaderProgram);
         this.mvPopMatrix();
 
@@ -289,7 +278,7 @@
         this.mvPushMatrix();
         	mat4.translate(this.mvMatrix, this.mvMatrix, [5, 0.0, 0.0]);
         	this.setMatrixUniforms();
-		this.moon.draw(this.gl,this.shaderProgram);
+		this.ball.draw(this.gl,this.shaderProgram);
         this.mvPopMatrix();
     }
 
