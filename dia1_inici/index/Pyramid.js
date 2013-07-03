@@ -3,29 +3,29 @@
 	this.VertexPositionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
 	vertices = [
-		-0.5, 0.0, 0.5, //front
-		 0.5, 0.0, 0.5,
-		 0.0, 1.0, 0.0,
+		-0.5,-0.5, 0.5, //front
+		 0.5,-0.5, 0.5,
+		 0.0, 0.5, 0.0,
 
-		 0.5, 0.0,-0.5, //back
-		-0.5, 0.0,-0.5,
-		 0.0, 1.0, 0.0,
+		 0.5,-0.5,-0.5, //back
+		-0.5,-0.5,-0.5,
+		 0.0, 0.5, 0.0,
 
-		-0.5, 0.0,-0.5, //left
-		-0.5, 0.0, 0.5,
-		 0.0, 1.0, 0.0,
+		-0.5,-0.5,-0.5, //left
+		-0.5,-0.5, 0.5,
+		 0.0, 0.5, 0.0,
 
-		 0.5, 0.0, 0.5, //right
-		 0.5, 0.0,-0.5,
-		 0.0, 1.0, 0.0,
+		 0.5,-0.5, 0.5, //right
+		 0.5,-0.5,-0.5,
+		 0.0, 0.5, 0.0,
 
-		 0.5, 0.0, 0.5, //bottom (base 1)
-		-0.5, 0.0,-0.5,
-		 0.5, 0.0,-0.5,
+		 0.5,-0.5, 0.5, //bottom (base 1)
+		-0.5,-0.5,-0.5,
+		 0.5,-0.5,-0.5,
 
-		 0.5, 0.0, 0.5, //bottom (base 2)
-		-0.5, 0.0, 0.5,
-		-0.5, 0.0,-0.5,
+		 0.5,-0.5, 0.5, //bottom (base 2)
+		-0.5,-0.5, 0.5,
+		-0.5,-0.5,-0.5,
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
         this.VertexPositionBuffer.itemSize = 3;
@@ -36,9 +36,9 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexNormalBuffer);
         normals = [
 		[   0, 0.5, 1], //no normalitzades
-	        [   0,-0.5,-1],
+	        [   0, 0.5,-1],
                 [  -1, 0.5, 0],
-		[   1,-0.5, 0],
+		[   1, 0.5, 0],
 		[   0,  -1, 0], 
 		[   0,  -1, 0]
         ];
