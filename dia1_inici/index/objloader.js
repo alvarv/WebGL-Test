@@ -46,13 +46,11 @@ Mesh.prototype.draw = function(gl, shaderProgram) {
     this.vertexBuffer.itemSize = 3;
     this.vertexBuffer.numItems = this.vertices.length / 3;
 
-    if (this.hasColors) {
-	this.colorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
-	this.colorBuffer.itemSize = 3;
-	this.colorBuffer.numItems = this.colors.length / 3;
-    }
+    this.colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
+    this.colorBuffer.itemSize = 3;
+    this.colorBuffer.numItems = this.colors.length / 3;
 
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
@@ -69,10 +67,9 @@ Mesh.prototype.draw = function(gl, shaderProgram) {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
 		gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	    }
-	    if (this.hasColors) {
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-		gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	    }
+
+	    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+	    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	    if (this.hasTextures) {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
@@ -179,14 +176,12 @@ function parseOBJ(txt, msh) {
             packed.norms.push( parseFloat(vertNormals[ (face[ 2 ] - 1) * 3 + 1 ] ));
             packed.norms.push( parseFloat(vertNormals[ (face[ 2 ] - 1) * 3 + 2 ] ));
 	    // colors
-	    if (hasColors) {
-		var matrl;
-		if (currentMat != "" ) matrl = currentMat;
-		else matrl = defltMat;
-		packed.colors.push(matrl[0]);
-		packed.colors.push(matrl[1]);
-		packed.colors.push(matrl[2]);
-	    }
+	    var matrl = defltMat;
+	    if (currentMat != "" ) matrl = currentMat;
+	    packed.colors.push(matrl[0]);
+	    packed.colors.push(matrl[1]);
+	    packed.colors.push(matrl[2]);
+
             // add the newly created vertex to the list of indices
             packed.hashindices[txt] = packed.index;
             packed.indices.push(packed.index);
