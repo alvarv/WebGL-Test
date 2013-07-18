@@ -8,16 +8,22 @@
 //
 function Mesh(url) { 
     this.loaded = false;
-    // attempt to load materials for this model:
-    getMeshFromServer(url+'.mtl', this,  function(txt, ob) { 
-	parseMTL(txt); 
-	// then, whatever the result, go for the geometry:
-	getMeshFromServer(url+'.obj', ob, function(txt, ob){
+    if (UrlExists(url+'.mtl')) {
+	// attempt to load materials for this model:
+	getMeshFromServer(url+'.mtl', this,  function(txt, ob) { 
+	    parseMTL(txt); 
+	    // then, whatever the result, go for the geometry:
+	    getMeshFromServer(url+'.obj', ob, function(txt, ob){
+		parseOBJ(txt, ob);
+		ob.loaded = true;
+	    });
+	}); 
+    } else { // No materials
+	getMeshFromServer(url+'.obj', this, function(txt, ob){
 	    parseOBJ(txt, ob);
 	    ob.loaded = true;
 	});
-    }); 
-    
+    }
 }
 
 Mesh.prototype.draw = function(gl, shaderProgram) {
@@ -91,14 +97,11 @@ if (typeof String.prototype.startsWith !== 'function') {
 
 // See https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started
 function getMeshFromServer(url, ob, doneCB) {
-    var httpr, firsttime = true;
+    var httpr;
     if (window.XMLHttpRequest) {
 	httpr = new XMLHttpRequest();
 	httpr.onreadystatechange = function() {
-	    if (httpr.readyState===4 || url.slice(url.length-4)==".mtl" && firsttime) {
-		firsttime = false;
-		doneCB(httpr.responseText, ob);
-	    }
+	    if (httpr.readyState===4) doneCB(httpr.responseText, ob);
 	};
 	httpr.open("GET", url, true);
 	httpr.send();
@@ -107,6 +110,14 @@ function getMeshFromServer(url, ob, doneCB) {
     }
 }
 
+// See: http://stackoverflow.com/questions/3646914/how-do-i-check-if-file-exists-in-jquery-or-javascript
+function UrlExists(url)
+{
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status!=404;
+}
 
 var Materials = {};
 
