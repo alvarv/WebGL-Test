@@ -29,6 +29,10 @@
 <script type="text/javascript" src="./index/Cube.js"></script>
 <script type="text/javascript" src="./index/Ball.js"></script>
 <script type="text/javascript" src="./index/Pyramid.js"></script>
+<script type="text/javascript" src="./index/objloader.js"></script>
+<script type="text/javascript">
+  var msh1 = new Mesh("models/flowers");
+</script>
 
 <!-- Camera -->
 <script type="text/javascript" src="./index/Camera.js"></script>
@@ -41,6 +45,7 @@
     attribute vec3 aVertexPos;
     attribute vec3 aVertexNormal;
     attribute vec3 aVertexColor;
+    attribute vec2 aTextureCoords;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
@@ -228,6 +233,9 @@
         program.vertexColorAttribute = this.gl.getAttribLocation(program, "aVertexColor");
         this.gl.enableVertexAttribArray(program.vertexColorAttribute);
 
+        program.vertexTextureAttribute = this.gl.getAttribLocation(program, "aTextureCoords");
+        this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
+        
         program.pMatrixUniform = this.gl.getUniformLocation(program, "uPMatrix");
         program.mvMatrixUniform = this.gl.getUniformLocation(program, "uMVMatrix");
         program.nMatrixUniform = this.gl.getUniformLocation(program, "uNMatrix");
@@ -294,8 +302,14 @@
 
 	//dibuixar la piràmide
         this.mvPushMatrix();
-        	this.setMatrixUniforms();
-		this.pyramid.draw(this.gl,this.shaderProgram);
+                if (msh1.loaded) {
+                    mat4.scale(this.mvMatrix, this.mvMatrix, [.3, .3, .3]);
+        	    this.setMatrixUniforms();
+                    msh1.draw(this.gl,this.shaderProgram);
+                } else {
+        	    this.setMatrixUniforms();
+		    this.pyramid.draw(this.gl,this.shaderProgram);
+                }
         this.mvPopMatrix();
     }
 
