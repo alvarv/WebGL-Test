@@ -91,12 +91,15 @@ if (typeof String.prototype.startsWith !== 'function') {
 
 // See https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started
 function getMeshFromServer(url, ob, doneCB) {
-    var httpr;
+    var httpr, firsttime = true;
     if (window.XMLHttpRequest) {
 	httpr = new XMLHttpRequest();
 	httpr.onreadystatechange = function() {
-	    if (httpr.readyState===4) doneCB(httpr.responseText, ob);
-	}
+	    if (httpr.readyState===4 || url.slice(url.length-4)==".mtl" && firsttime) {
+		firsttime = false;
+		doneCB(httpr.responseText, ob);
+	    }
+	};
 	httpr.open("GET", url, true);
 	httpr.send();
     } else {
