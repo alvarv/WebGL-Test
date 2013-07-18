@@ -21,18 +21,16 @@ function Mesh(url) {
 }
 
 Mesh.prototype.draw = function(gl, shaderProgram) {
-	// first call:
-	if (!this.loaded) return;
-	// set up buffers:
-    if (this.hasNormals) {
-	this.normalBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertexNormals), gl.STATIC_DRAW);
-	this.normalBuffer.itemSize = 3;
-	this.normalBuffer.numItems = this.vertexNormals.length / 3;
-    }
+    // first call:
+    if (!this.loaded) return;
+    // set up buffers:
+    this.normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertexNormals), gl.STATIC_DRAW);
+    this.normalBuffer.itemSize = 3;
+    this.normalBuffer.numItems = this.vertexNormals.length / 3;
 
-    if (this.hasTetures) {
+    if (this.hasTextures) {
 	this.textureBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.textures), gl.STATIC_DRAW);
@@ -63,10 +61,8 @@ Mesh.prototype.draw = function(gl, shaderProgram) {
 	    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 	    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	    
-	    if (this.hasNormals) {
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-		gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	    }
+	    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+	    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
 	    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -156,7 +152,7 @@ function parseOBJ(txt, msh) {
     var defltMat = [0.5, 0.0, 0.0];
 
     var hasNormals = false;
-    var hasTetures = false;
+    var hasTextures = false;
 
     function addOnePt(txt) {
 	if( txt in packed.hashindices ){
@@ -169,12 +165,20 @@ function parseOBJ(txt, msh) {
             packed.verts.push( parseFloat(verts[ (face[ 0 ] - 1) * 3 + 1 ] ));
             packed.verts.push( parseFloat(verts[ (face[ 0 ] - 1) * 3 + 2 ] ));
             // vertex textures
-            packed.textures.push( parseFloat(textures[ (face[ 1 ] - 1) * 2 + 0 ] ));
-            packed.textures.push( parseFloat(textures[ (face[ 1 ] - 1) * 2 + 1 ] ));
+	    if (hasTextures) {
+		packed.textures.push( parseFloat(textures[ (face[ 1 ] - 1) * 2 + 0 ] ));
+		packed.textures.push( parseFloat(textures[ (face[ 1 ] - 1) * 2 + 1 ] ));
+	    }
             // vertex normals
-            packed.norms.push( parseFloat(vertNormals[ (face[ 2 ] - 1) * 3 + 0 ] ));
-            packed.norms.push( parseFloat(vertNormals[ (face[ 2 ] - 1) * 3 + 1 ] ));
-            packed.norms.push( parseFloat(vertNormals[ (face[ 2 ] - 1) * 3 + 2 ] ));
+	    if (hasNormals) {
+		packed.norms.push( parseFloat(vertNormals[(face[2] - 1)*3 + 0]));
+		packed.norms.push( parseFloat(vertNormals[(face[2] - 1)*3 + 1]));
+		packed.norms.push( parseFloat(vertNormals[(face[2] - 1)*3 + 2]));
+	    } else {
+		packed.norms.push(faceNormal[0]);
+		packed.norms.push(faceNormal[1]);
+		packed.norms.push(faceNormal[2]);
+	    }
 	    // colors
 	    var matrl = defltMat;
 	    if (currentMat != "" ) matrl = currentMat;
@@ -189,13 +193,34 @@ function parseOBJ(txt, msh) {
             packed.index += 1;
 	}	
     }
+
+    function compNormal(a, b, c) {
+	var ia = parseInt(a.replace(/\s+/, "").split('/')[0]);
+	var ib = parseInt(b.replace(/\s+/, "").split('/')[0]);
+	var ic = parseInt(c.replace(/\s+/, "").split('/')[0]);
+
+	var v1 = {}, v2 = {}, n = {};
+	v1.x = parseFloat(verts[(ib - 1)*3 + 0]) - parseFloat(verts[(ia - 1)*3 + 0]);
+	v1.y = parseFloat(verts[(ib - 1)*3 + 1]) - parseFloat(verts[(ia - 1)*3 + 1]);
+	v1.z = parseFloat(verts[(ib - 1)*3 + 2]) - parseFloat(verts[(ia - 1)*3 + 2]);
+	v2.x = parseFloat(verts[(ic - 1)*3 + 0]) - parseFloat(verts[(ia - 1)*3 + 0]);
+	v2.y = parseFloat(verts[(ic - 1)*3 + 1]) - parseFloat(verts[(ia - 1)*3 + 1]);
+	v2.z = parseFloat(verts[(ic - 1)*3 + 2]) - parseFloat(verts[(ia - 1)*3 + 2]);
+
+	n.x = v1.y*v2.z - v1.z*v2.y;
+	n.y = v1.z*v2.x - v1.x*v2.z;
+	n.z = v1.x*v2.y - v1.y*v2.x;
+	var norm = Math.sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+	return [n.x/norm, n.y/norm, n.z/norm];
+    }
     
     var line;
     // array of lines separated by the newline
     var lines = txt.split( '\n' )
     for( var i=0; i<lines.length; ++i ){
+	if (lines[i][0] == '#') continue;
 	// if this is a vertex
-	if( lines[i].startsWith('v ')){
+	if (lines[i].startsWith('v ')){
             line = lines[i].slice(2).split(/\s+/)
             verts.push(line[0]);
             verts.push(line[1]);
@@ -211,7 +236,7 @@ function parseOBJ(txt, msh) {
 	}
 	// if this is a texture
 	else if (lines[i].startsWith('vt')){
-	    hasTetures = true;
+	    hasTextures = true;
             line = lines[i].slice(3).split(" ")
             textures.push(line[0]);
             textures.push(line[1]);
@@ -223,12 +248,25 @@ function parseOBJ(txt, msh) {
 	}
 	// if this is a face (we assume it is convex, at the least):
 	else if( lines[i].startsWith('f ')){
+	    if (!hasNormals && vertNormals.length == 0) {
+		// Need to provide something!
+		for (var k = 0; k < verts.length; ++k) vertNormals.push(0.0);
+	    }
             line = lines[i].slice(2).split(/\s+/);
-            for(var j=1; j<line.length-1; j++){
-		addOnePt(line[0]);
-		addOnePt(line[j]);
-		addOnePt(line[j+1]);
-            }
+	    if (hasNormals) 
+		for(var j=1; j<line.length-1; j++){
+		    addOnePt(line[0]);
+		    addOnePt(line[j]);
+		    addOnePt(line[j+1]);
+		}
+	    else {
+		var faceNormal = compNormal(line[0], line[1], line[2]);
+		for(var j=1; j<line.length-1; j++){
+		    addOnePt(line[0]+'///'+faceNormal);
+		    addOnePt(line[j]+'///'+faceNormal);
+		    addOnePt(line[j+1]+'///'+faceNormal);
+		}
+	    }
 	}
     }
     msh.vertices = packed.verts;
@@ -238,6 +276,6 @@ function parseOBJ(txt, msh) {
     msh.indices = packed.indices;
     msh.hasColors = hasColors;
     msh.hasNormals = hasNormals;
-    msh.hasTetures = hasTetures;
+    msh.hasTextures = hasTextures;
 }
 
