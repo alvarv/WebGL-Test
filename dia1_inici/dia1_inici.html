@@ -29,6 +29,33 @@
 <script type="text/javascript" src="./index/Cube.js"></script>
 <script type="text/javascript" src="./index/Ball.js"></script>
 <script type="text/javascript" src="./index/Pyramid.js"></script>
+<script type="text/javascript" src="./index/objloader.js"></script>
+<script type="text/javascript">
+  // descomentar exactament un parell:
+  //var msh1 = new Mesh("models/al");
+  //var msh1Scale = [0.6, 0.6, 0.6];
+  //--
+  //var msh1 = new Mesh("models/Shaun_Hastings");
+  //var msh1Scale = [1.3, 1.3, 1.3];
+  //--
+  //var msh1 = new Mesh("models/f-16");
+  //var msh1Scale = [.5, .5, .5];
+  //--
+  //var msh1 = new Mesh("models/flowers");
+  //var msh1Scale = [.3, .3, .3];
+  //--
+  //var msh1 = new Mesh("models/porsche");
+  //var msh1Scale = [.05, .05, .05]
+  //--
+  //var msh1 = new Mesh("models/rose+vase");
+  //var msh1Scale = [.03, .03, .03];
+  //--
+  var msh1 = new Mesh("models/teapot");
+  var msh1Scale = [.002, .002, .002];
+  //--
+  //var msh1 = new Mesh("models/soccerball");
+  //var msh1Scale = [.3, .3, .3];
+</script>
 
 <!-- Camera -->
 <script type="text/javascript" src="./index/Camera.js"></script>
@@ -41,6 +68,7 @@
     attribute vec3 aVertexPos;
     attribute vec3 aVertexNormal;
     attribute vec3 aVertexColor;
+    attribute vec2 aTextureCoords;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
@@ -228,6 +256,9 @@
         program.vertexColorAttribute = this.gl.getAttribLocation(program, "aVertexColor");
         this.gl.enableVertexAttribArray(program.vertexColorAttribute);
 
+        program.vertexTextureAttribute = this.gl.getAttribLocation(program, "aTextureCoords");
+        this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
+        
         program.pMatrixUniform = this.gl.getUniformLocation(program, "uPMatrix");
         program.mvMatrixUniform = this.gl.getUniformLocation(program, "uMVMatrix");
         program.nMatrixUniform = this.gl.getUniformLocation(program, "uNMatrix");
@@ -294,8 +325,14 @@
 
 	//dibuixar la piràmide
         this.mvPushMatrix();
-        	this.setMatrixUniforms();
-		this.pyramid.draw(this.gl,this.shaderProgram);
+                if (msh1.loaded) {
+                    mat4.scale(this.mvMatrix, this.mvMatrix, msh1Scale);
+        	    this.setMatrixUniforms();
+                    msh1.draw(this.gl,this.shaderProgram);
+                } else {
+        	    this.setMatrixUniforms();
+		    this.pyramid.draw(this.gl,this.shaderProgram);
+                }
         this.mvPopMatrix();
     }
 
