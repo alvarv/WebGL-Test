@@ -74,6 +74,14 @@
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(unpackedColors), gl.STATIC_DRAW);
         this.VertexColorBuffer.itemSize = 4;
         this.VertexColorBuffer.numItems = 18;
+
+	// INDICES
+	this.VertexIndexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.VertexIndexBuffer);
+	var pyrIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(pyrIndices), gl.STATIC_DRAW);
+        this.VertexIndexBuffer.itemSize = 1;
+        this.VertexIndexBuffer.numItems = 18;
     }
 
     Pyramid.prototype.draw = function(gl,shaderProgram) {

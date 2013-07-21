@@ -40,28 +40,26 @@
 <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexPos;
     attribute vec3 aVertexNormal;
-    attribute vec4 aVertexColor;
+    attribute vec3 aVertexColor;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
     uniform mat3 uNMatrix;
 
-    vec3 colorAmbient = vec3(0.2,0.2,0.2);
+    vec3 colorAmbient = vec3(0.1,0.1,0.1);
     vec3 colorLlum = vec3(0.8,0.8,0.8);
     vec3 dirLlum = vec3(0.25,0.25,1.0);
 
-    varying vec3 vfactorLlum;
     varying vec4 vColor;
 
     void main(void) {
         vec4 mvPosition = uMVMatrix * vec4(aVertexPos, 1.0); //calculem la posició del vertex en coordenades de camera (view*model)
 
-        vec3 normalTransformada = uNMatrix * normalize(aVertexNormal);
+        vec3 normalTransformada =  normalize(uNMatrix * aVertexNormal);
         float factorLlumDireccional = max(dot(normalTransformada, dirLlum), 0.0);
 
         gl_Position = uPMatrix * mvPosition; //transformem la posició del vertex segons el format de la càmera
-	vfactorLlum = colorAmbient + colorLlum * factorLlumDireccional;
-	vColor = aVertexColor;
+	vColor = vec4((colorAmbient + colorLlum * factorLlumDireccional) * aVertexColor, 1.);
     }
 </script>
 
@@ -69,11 +67,10 @@
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
 
-    varying vec3 vfactorLlum;
     varying vec4 vColor;
 
     void main(void) {
-        gl_FragColor = vec4(vfactorLlum, 1.0) * vColor;
+        gl_FragColor =  vColor;
     }
 </script>
 
