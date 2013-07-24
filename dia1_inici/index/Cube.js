@@ -104,6 +104,7 @@
     }
 
     Cube.prototype.draw = function(gl,shaderProgram) {
+	gl.useProgram(shaderProgram);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 

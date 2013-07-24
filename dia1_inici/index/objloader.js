@@ -29,6 +29,7 @@ function Mesh(url) {
 Mesh.prototype.draw = function(gl, shaderProgram) {
     // first call:
     if (!this.loaded) return;
+    gl.useProgram(shaderProgram);
     // set up buffers:
     this.normalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);

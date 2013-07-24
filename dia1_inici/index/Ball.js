@@ -74,6 +74,7 @@
     }
 
     Ball.prototype.draw = function(gl,shaderProgram) {
+	gl.useProgram(shaderProgram);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.ballVertexPositionBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.ballVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
